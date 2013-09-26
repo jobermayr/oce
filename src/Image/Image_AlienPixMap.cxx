@@ -28,6 +28,7 @@
 #include <Image_AlienPixMap.hxx>
 #include <gp.hxx>
 #include <TCollection_AsciiString.hxx>
+#include <TColStd_Array1OfByte.hxx>
 #include <fstream>
 #include <stdio.h>
 
@@ -321,16 +322,18 @@ bool Image_AlienPixMap::savePPM (const TCollection_AsciiString& theFileName) con
   Quantity_Color aColor;
   Quantity_Parameter aDummy;
   Standard_Byte aByte;
+  TColStd_Array1OfByte aByteArray(0, 3*SizeX()-1);
   for (Standard_Size aRow = 0; aRow < SizeY(); ++aRow)
   {
     for (Standard_Size aCol = 0; aCol < SizeX(); ++aCol)
     {
       // extremely SLOW but universal (implemented for all supported pixel formats)
       aColor = PixelColor (aCol, aRow, aDummy);
-      aByte = Standard_Byte(aColor.Red() * 255.0);   fwrite (&aByte, 1, 1, aFile);
-      aByte = Standard_Byte(aColor.Green() * 255.0); fwrite (&aByte, 1, 1, aFile);
-      aByte = Standard_Byte(aColor.Blue() * 255.0);  fwrite (&aByte, 1, 1, aFile);
+      aByteArray.SetValue(3*aCol,   Standard_Byte(aColor.Red()   * 255.0));
+      aByteArray.SetValue(3*aCol+1, Standard_Byte(aColor.Green() * 255.0));
+      aByteArray.SetValue(3*aCol+2, Standard_Byte(aColor.Blue()  * 255.0));
     }
+    fwrite (&aByteArray(0), 1, aByteArray.Length(), aFile);
   }
 
   // Close file
