@@ -1290,10 +1290,18 @@ if(OCE_COVERAGE)
 endif(OCE_COVERAGE)
 
 if(OCE_USE_TCL_TEST_FRAMEWORK)
-	file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "set env(CSF_TestDataPath) ${OCE_TCL_TEST_DATA_DIRECTORY}
+	get_target_property(OCE_CSF_GraphicShr TKOpenGl LOCATION)
+	file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "
+set env(CSF_TestDataPath) ${OCE_TCL_TEST_DATA_DIRECTORY}
 set env(CSF_TestScriptsPath) ${OCE_TCL_TEST_SCRIPT_DIRECTORY}
-set env(OCE_INSTALL_DATADIR) ${CMAKE_CURRENT_SOURCE_DIR}
+set env(CASROOT) ${CMAKE_CURRENT_SOURCE_DIR}
+set env(CSF_DrawPluginDefaults) ${CMAKE_CURRENT_SOURCE_DIR}/src/DrawResources
+set env(CSF_PluginDefaults) ${CMAKE_CURRENT_SOURCE_DIR}/src/StdResource
+set env(DRAWDEFAULT) ${CMAKE_CURRENT_SOURCE_DIR}/src/DrawResources/DrawDefault
+set env(DRAWHOME) ${CMAKE_CURRENT_SOURCE_DIR}/src/DrawResources
+set env(CSF_GraphicShr) ${OCE_CSF_GraphicShr}
 ")
+
 	if(WIN32)
 		file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "set env(PATH) adm/cmake/DRAWEXE;$env(PATH)\n")
 	elseif(APPLE)
@@ -1303,9 +1311,9 @@ set env(OCE_INSTALL_DATADIR) ${CMAKE_CURRENT_SOURCE_DIR}
 	endif()
 	foreach(test_package ${OCE_TCL_TEST_LIST})
 		if(test_package STREQUAL ALL)
-			file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "testgrid\n")
+			file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "testgrid -parallel 1\n")
 		else(test_package STREQUAL ALL)
-			file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "testgrid ${test_package}\n")
+			file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "testgrid -parallel 1 ${test_package}\n")
 		endif(test_package STREQUAL ALL)
 	endforeach()
 	file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "return")
