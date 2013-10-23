@@ -134,6 +134,8 @@ if (NOT WIN32)
 	mark_as_advanced(OCE_RPATH_FILTER_SYSTEM_PATHS)
 endif (NOT WIN32)
 
+option_with_default( OCE_USE_TCL_TEST_FRAMEWORK "Add occt-tests target" OFF )
+
 #
 # By default, OSX uses X11 OpenGl implementation
 #
@@ -173,6 +175,14 @@ option( OCE_MULTITHREAD_LIBRARY "Multithread library" ${OCE_MULTITHREAD_LIBRARY}
 if( OCE_MULTITHREAD_LIBRARY STREQUAL "TBB" )
 	option_with_default( OCE_TBB_MALLOC_SUPPORT "Use TBB for memory allocation" ON )
 endif( OCE_MULTITHREAD_LIBRARY STREQUAL "TBB" )
+
+if( OCE_USE_TCL_TEST_FRAMEWORK )
+	set( OCE_TCL_TEST_SCRIPT_DIRECTORY "ros/tests" CACHE PATH "Path to OCCT tests" )
+	set( OCE_TCL_TEST_DATA_DIRECTORY "ros/data" CACHE PATH "Path to OCCT data files" )
+	set( tcl_test_list 3rdparty;blend;boolean;bugs;caf;chamfer;de;demo;draft;feat;geometry;heal;mesh;mkface;nproject;offset;perf;pipe;prism;sewing;thrusection;v3d;xcaf;xml )
+	set( OCE_TCL_TEST_LIST "ALL" CACHE STRING "List of OCCT test packages to run (${tcl_test_list})" )
+	mark_as_advanced(OCE_TCL_TEST_SCRIPT_DIRECTORY OCE_TCL_TEST_DATA_DIRECTORY OCE_TCL_TEST_LIST)
+endif( OCE_USE_TCL_TEST_FRAMEWORK )
 
 if( NOT DEFINED OCE_INSTALL_PREFIX )
 	if( WIN32 )
@@ -1268,6 +1278,7 @@ if(OCE_TESTING)
 	enable_testing()
 	subdirs(test)
 endif(OCE_TESTING)
+
 if(OCE_COVERAGE)
 	set(OCE_TESTING ON CACHE BOOL "Testing enabled by coverage option" FORCE)
 	# build static libs, better coverage report
@@ -1277,6 +1288,40 @@ if(OCE_COVERAGE)
 	set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "-fprofile-arcs -ftest-coverage" CACHE STRING "Extra linker flags required by code coverage" FORCE)
 	set(OCE_BUILD_TYPE "Debug" CACHE STRING "Build type required by testing framework" FORCE)
 endif(OCE_COVERAGE)
+
+if(OCE_USE_TCL_TEST_FRAMEWORK)
+	file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "set env(CSF_TestDataPath) ${OCE_TCL_TEST_DATA_DIRECTORY}
+set env(CSF_TestScriptsPath) ${OCE_TCL_TEST_SCRIPT_DIRECTORY}
+set env(OCE_INSTALL_DATADIR) ${CMAKE_CURRENT_SOURCE_DIR}
+")
+	if(WIN32)
+		file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "set env(PATH) adm/cmake/DRAWEXE;$env(PATH)\n")
+	elseif(APPLE)
+		file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "set env(DYLD_LIBRARY_PATH) adm/cmake/DRAWEXE\n")
+	else()
+		file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "set env(LD_LIBRARY_PATH) adm/cmake/DRAWEXE\n")
+	endif()
+	foreach(test_package ${OCE_TCL_TEST_LIST})
+		if(test_package STREQUAL ALL)
+			file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "testgrid\n")
+		else(test_package STREQUAL ALL)
+			file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "testgrid ${test_package}\n")
+		endif(test_package STREQUAL ALL)
+	endforeach()
+	file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/DrawLaunchTests "return")
+	get_target_property(DRAWEXE_COMMAND DRAWEXE LOCATION)
+	get_filename_component(DRAWEXE_DIR "${DRAWEXE_COMMAND}" PATH)
+	set(all_tests)
+	set(copy_module_targets)
+	foreach(module TKernel;TKMath;TKAdvTools;TKG2d;TKG3d;TKGeomBase;TKBRep;TKGeomAlgo;TKTopAlgo;TKPrim;TKBO;TKHLR;TKMesh;TKShHealing;TKXMesh;TKBool;TKFillet;TKFeat;TKOffset;TKService;TKV3d;TKOpenGl;TKMeshVS;TKNIS;TKVoxel;TKCDF;PTKernel;TKLCAF;FWOSPlugin;TKPShape;TKBinL;TKXmlL;TKPLCAF;TKTObj;TKShapeSchema;TKStdLSchema;TKCAF;TKBin;TKXml;TKPCAF;TKBinTObj;TKXmlTObj;TKStdSchema;TKSTL;TKXSBase;TKSTEPBase;TKIGES;TKSTEPAttr;TKSTEP209;TKSTEP;TKVRML;TKXCAF;TKXCAFSchema;TKXmlXCAF;TKBinXCAF;TKXDEIGES;TKXDESTEP;TKDraw;TKTopTest;TKViewerTest;TKXSDRAW;TKDCAF;TKXDEDRAW;TKTObjDRAW;TKQADraw)
+		get_target_property(private_module_PATH ${module} LOCATION)
+		add_custom_command(OUTPUT copy${module} COMMAND ${CMAKE_COMMAND} -E copy "${private_module_PATH}" "${DRAWEXE_DIR}/" VERBATIM)
+		set(copy_module_targets ${copy_module_targets} copy${module})
+	endforeach()
+	add_custom_command(OUTPUT OcctTests COMMAND ${DRAWEXE_COMMAND} -v -f DrawLaunchTests)
+	add_custom_target(occt-tests DEPENDS ${copy_module_targets} OcctTests)
+endif(OCE_USE_TCL_TEST_FRAMEWORK)
+
 
 ###############################################################################
 # OCE Packaging                                                               #
