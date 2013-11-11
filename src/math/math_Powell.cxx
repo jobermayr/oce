@@ -29,8 +29,7 @@
 #include <math_MultipleVarFunction.hxx>
 
 
-static Standard_Real sqrarg;
-#define SQR(a) (sqrarg=(a), sqrarg*sqrarg)
+#define SQR(a) (Standard_Real(a)*Standard_Real(a))
 
 class DirFunctionBis : public math_Function {
 
