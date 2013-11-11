@@ -24,7 +24,7 @@
 #if HAVE_IEEEFP_H
 # include <ieeefp.h>
 #endif
-#if !defined(HAVE_FINITE) && defined(isfinite)
+#if defined(isfinite)
 # define finite isfinite
 #endif
 
