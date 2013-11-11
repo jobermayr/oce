@@ -142,6 +142,7 @@ void BRepFill_Pipe::Perform(const TopoDS_Wire&  Spine,
   case GeomFill_IsDiscreteTrihedron:
     TLaw = new GeomFill_DiscreteTrihedron();
     break;
+  default:;
   }
   Handle(GeomFill_CurveAndTrihedron) Loc = 
     new (GeomFill_CurveAndTrihedron) (TLaw);

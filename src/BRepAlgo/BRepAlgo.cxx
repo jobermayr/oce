@@ -464,6 +464,7 @@ TopoDS_Edge  BRepAlgo::ConcatenateWireC0(const TopoDS_Wire& aWire)
 		    }
 		  break;
 		}
+          default:;
 	      } //end of switch and else
 	  if (Done)
 	    {

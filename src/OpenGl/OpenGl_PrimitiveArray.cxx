@@ -176,6 +176,7 @@ void OpenGl_PrimitiveArray::DrawArray (Tint theLightingModel,
     case TelTriangleFansArrayType:
       glColor3fv (theInteriorColour->rgb);
       break;
+    default:;
   }
 
   // Temporarily disable environment mapping
@@ -553,6 +554,7 @@ OpenGl_PrimitiveArray::OpenGl_PrimitiveArray (CALL_DEF_PARRAY* thePArray)
     case TelTriangleFansArrayType:
       myDrawMode = GL_TRIANGLE_FAN;
       break;
+    default:;
   }
 }
 
